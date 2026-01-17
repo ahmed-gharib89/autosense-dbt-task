@@ -1,0 +1,48 @@
+version: 2
+
+sources:
+  - name: raw
+    description: "Raw JSON data loaded from Snowflake stages"
+    database: AUTOSENSE
+    schema: RAW_DATA
+
+    tables:
+      - name: raw_users
+        description: "Raw user data from users.json"
+        columns:
+          - name: raw_data
+            description: "VARIANT column containing JSON user record"
+          - name: _loaded_at
+            description: "Timestamp when the record was loaded"
+          - name: _source_file
+            description: "Source file name from stage"
+
+      - name: raw_chargers
+        description: "Raw charger data from chargers.json"
+        columns:
+          - name: raw_data
+            description: "VARIANT column containing JSON charger record"
+          - name: _loaded_at
+            description: "Timestamp when the record was loaded"
+          - name: _source_file
+            description: "Source file name from stage"
+
+      - name: raw_transactions
+        description: "Raw transaction data from transactions.json"
+        columns:
+          - name: raw_data
+            description: "VARIANT column containing JSON transaction record"
+          - name: _loaded_at
+            description: "Timestamp when the record was loaded"
+          - name: _source_file
+            description: "Source file name from stage"
+
+      - name: raw_payments
+        description: "Raw payment data from payments.json"
+        columns:
+          - name: raw_data
+            description: "VARIANT column containing JSON payment record"
+          - name: _loaded_at
+            description: "Timestamp when the record was loaded"
+          - name: _source_file
+            description: "Source file name from stage"
