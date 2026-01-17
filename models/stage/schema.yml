@@ -1,0 +1,88 @@
+version: 2
+
+models:
+  - name: stg_users
+    description: "Stage layer - Parsed user data from raw JSON"
+    columns:
+      - name: user_id
+        description: "Unique identifier for the user"
+      - name: name
+        description: "User's full name"
+      - name: email
+        description: "User's email address"
+      - name: tier
+        description: "User subscription tier (guest/subscriber)"
+      - name: created_at
+        description: "Timestamp when the user account was created"
+      - name: _loaded_at
+        description: "Timestamp when the raw data was loaded"
+      - name: _source_file
+        description: "Source file from stage"
+      - name: _dbt_updated_at
+        description: "Timestamp when dbt processed this record"
+
+  - name: stg_chargers
+    description: "Stage layer - Parsed charger data from raw JSON"
+    columns:
+      - name: charger_id
+        description: "Unique identifier for the charger"
+      - name: city
+        description: "City where the charger is located"
+      - name: latitude
+        description: "GPS latitude coordinate"
+      - name: longitude
+        description: "GPS longitude coordinate"
+      - name: installed_at
+        description: "Timestamp when the charger was installed"
+      - name: _loaded_at
+        description: "Timestamp when the raw data was loaded"
+      - name: _source_file
+        description: "Source file from stage"
+      - name: _dbt_updated_at
+        description: "Timestamp when dbt processed this record"
+
+  - name: stg_transactions
+    description: "Stage layer - Parsed transaction data from raw JSON"
+    columns:
+      - name: session_id
+        description: "Unique identifier for the charging session"
+      - name: user_id
+        description: "Foreign key to users"
+      - name: charger_id
+        description: "Foreign key to chargers"
+      - name: start_time
+        description: "Timestamp when charging session started"
+      - name: end_time
+        description: "Timestamp when charging session ended (null if failed)"
+      - name: kwh_consumed
+        description: "Energy consumed in kilowatt-hours"
+      - name: payment_method
+        description: "Payment method used (credit_card/debit_card/app_wallet)"
+      - name: status
+        description: "Transaction status (completed/failed)"
+      - name: _loaded_at
+        description: "Timestamp when the raw data was loaded"
+      - name: _source_file
+        description: "Source file from stage"
+      - name: _dbt_updated_at
+        description: "Timestamp when dbt processed this record"
+
+  - name: stg_payments
+    description: "Stage layer - Parsed payment data from raw JSON"
+    columns:
+      - name: payment_id
+        description: "Unique identifier for the payment"
+      - name: session_id
+        description: "Foreign key to transactions"
+      - name: user_id
+        description: "Foreign key to users"
+      - name: amount
+        description: "Payment amount"
+      - name: currency
+        description: "Currency code (CHF)"
+      - name: _loaded_at
+        description: "Timestamp when the raw data was loaded"
+      - name: _source_file
+        description: "Source file from stage"
+      - name: _dbt_updated_at
+        description: "Timestamp when dbt processed this record"
