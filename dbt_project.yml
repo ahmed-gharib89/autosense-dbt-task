@@ -44,6 +44,12 @@ models:
       +schema: curated
       +tags: ['silver', 'cleaned', 'transformed']
 
+    # Gold Layer - Star schema dimensional models for analytics
+    semantic:
+      +materialized: table
+      +schema: semantic
+      +tags: ['gold', 'semantic', 'analytics']
+
 vars:
   # Switzerland geographic bounding box for location validation
   switzerland_lat_min: 45.817995
