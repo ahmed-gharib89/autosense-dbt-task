@@ -216,3 +216,4 @@ data/
 dbt_internal_packages/
 
 .vscode/
+.github/
