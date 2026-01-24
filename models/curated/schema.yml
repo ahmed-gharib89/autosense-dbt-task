@@ -1,0 +1,62 @@
+version: 2
+
+models:
+  - name: cur_chargers
+    description: >
+      Curated charger dimension with standardized city names and data quality validation.
+      City names are normalized using a seed mapping table (e.g., 'Zuerich' -> 'Zurich').
+      Geographic coordinates are validated against Switzerland's bounding box.
+    columns:
+      - name: charger_id
+        description: "Unique identifier for the charger"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: city
+        description: "Standardized city name (mapped from city_name_mapping seed)"
+        data_tests:
+          - not_null
+
+      - name: city_original
+        description: "Original city name from source data (for audit purposes)"
+
+      - name: latitude
+        description: "GPS latitude coordinate"
+
+      - name: longitude
+        description: "GPS longitude coordinate"
+
+      - name: installed_at
+        description: "Timestamp when the charger was installed"
+
+      - name: is_invalid_location
+        description: >
+          TRUE if coordinates doesn't exist or are outside Switzerland bounds
+          (lat: 45.817995-47.808455, lon: 5.955911-10.492294)
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+
+      - name: is_unmapped_city
+        description: "TRUE if city name was not found in city_name_mapping seed"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+          - accepted_values:
+              severity: warn
+              arguments:
+                values: [false]
+
+      - name: _loaded_at
+        description: "Timestamp when the raw data was loaded"
+
+      - name: _source_file
+        description: "Source file from stage"
+
+      - name: _dbt_updated_at
+        description: "Timestamp when dbt processed this record"

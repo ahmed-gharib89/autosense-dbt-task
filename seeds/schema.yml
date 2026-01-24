@@ -1,0 +1,19 @@
+version: 2
+
+seeds:
+  - name: city_name_mapping
+    description: >
+      Lookup table for standardizing Swiss city names.
+      Maps variant spellings to canonical names (e.g., 'Zuerich' -> 'Zurich').
+      Used by cur_chargers to normalize city names across the data warehouse.
+    columns:
+      - name: city_name_raw
+        description: "Original city name as found in source data (case-insensitive matching)"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: city_name_standardized
+        description: "Standardized city name for analytics and reporting"
+        data_tests:
+          - not_null

@@ -37,3 +37,24 @@ models:
       +materialized: table
       +schema: stg
       +tags: ['bronze', 'raw', 'staged']
+
+    # Silver Layer - Cleaned and transformed data as tables
+    curated:
+      +materialized: table
+      +schema: curated
+      +tags: ['silver', 'cleaned', 'transformed']
+
+vars:
+  # Switzerland geographic bounding box for location validation
+  switzerland_lat_min: 45.817995
+  switzerland_lat_max: 47.808455
+  switzerland_lon_min: 5.955911
+  switzerland_lon_max: 10.492294
+
+seeds:
+  autosense_dbt:
+    city_name_mapping:
+      +column_types:
+        city_name_raw: varchar(100)
+        city_name_standardized: varchar(100)
+      +tags: ['reference', 'mapping']
