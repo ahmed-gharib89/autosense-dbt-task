@@ -1,6 +1,6 @@
 -- =====================================================
 -- Snowflake Raw Layer Setup Script
--- AutoSense EV Charging Data Pipeline
+-- AutoSense_DEV EV Charging Data Pipeline
 -- =====================================================
 -- This script creates the database, schema, stages,
 -- and tables for loading JSON data files.
@@ -10,8 +10,8 @@
 -- =====================================================
 -- STEP 1: Create Database and Schema
 -- =====================================================
-CREATE DATABASE IF NOT EXISTS AUTOSENSE;
-USE DATABASE AUTOSENSE;
+CREATE DATABASE IF NOT EXISTS AUTOSENSE_DEV;
+USE DATABASE AUTOSENSE_DEV;
 
 CREATE SCHEMA IF NOT EXISTS RAW_DATA;
 USE SCHEMA RAW_DATA;
@@ -139,6 +139,6 @@ SELECT 'raw_payments', COUNT(*) FROM raw_payments;
 -- STEP 8: Grant Permissions to dbt Role (if needed)
 -- =====================================================
 -- Uncomment and modify as needed:
-GRANT USAGE ON DATABASE AUTOSENSE TO ROLE DBT_ROLE;
-GRANT USAGE ON SCHEMA AUTOSENSE.RAW_DATA TO ROLE DBT_ROLE;
-GRANT SELECT ON ALL TABLES IN SCHEMA AUTOSENSE.RAW_DATA TO ROLE DBT_ROLE;
+GRANT USAGE ON DATABASE AUTOSENSE_DEV TO ROLE DBT_ROLE;
+GRANT USAGE ON SCHEMA AUTOSENSE_DEV.RAW_DATA TO ROLE DBT_ROLE;
+GRANT SELECT ON ALL TABLES IN SCHEMA AUTOSENSE_DEV.RAW_DATA TO ROLE DBT_ROLE;
