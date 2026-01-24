@@ -128,3 +128,40 @@ models:
 
       - name: _dbt_updated_at
         description: "Timestamp when dbt processed this record"
+
+  - name: cur_users
+    description: >
+      Curated user dimension. Pass-through from staging with no data cleansing required.
+    columns:
+      - name: user_id
+        description: "Unique identifier for the user"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: name
+        description: "User's full name"
+
+      - name: email
+        description: "User's email address"
+        data_tests:
+          - unique
+
+      - name: tier
+        description: "User subscription tier (guest/subscriber)"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['guest', 'subscriber']
+
+      - name: created_at
+        description: "Timestamp when the user account was created"
+
+      - name: _loaded_at
+        description: "Timestamp when the raw data was loaded"
+
+      - name: _source_file
+        description: "Source file from stage"
+
+      - name: _dbt_updated_at
+        description: "Timestamp when dbt processed this record"
