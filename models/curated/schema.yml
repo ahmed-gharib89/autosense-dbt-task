@@ -60,3 +60,71 @@ models:
 
       - name: _dbt_updated_at
         description: "Timestamp when dbt processed this record"
+
+  - name: cur_payments
+    description: >
+      Curated payment fact with data quality validation.
+      Flags zero/negative amounts and statistical outliers using IQR method.
+    columns:
+      - name: payment_id
+        description: "Unique identifier for the payment"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: session_id
+        description: "Foreign key to transactions (charging sessions)"
+        data_tests:
+          - not_null
+
+      - name: user_id
+        description: "Foreign key to users"
+        data_tests:
+          - not_null
+
+      - name: amount
+        description: "Payment amount in the specified currency"
+
+      - name: currency
+        description: "Currency code (e.g., CHF)"
+
+      - name: is_missing_amount
+        description: "TRUE if amount is NULL"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+
+      - name: is_invalid_amount
+        description: "TRUE if amount is zero or negative"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+
+      - name: is_outlier_amount
+        description: >
+          TRUE if amount is a statistical outlier (outside Q1-1.5*IQR to Q3+1.5*IQR range).
+          Only applies to positive amounts.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+
+      - name: _outlier_lower_bound
+        description: "IQR lower bound used for outlier detection (Q1 - 1.5*IQR)"
+
+      - name: _outlier_upper_bound
+        description: "IQR upper bound used for outlier detection (Q3 + 1.5*IQR)"
+
+      - name: _loaded_at
+        description: "Timestamp when the raw data was loaded"
+
+      - name: _source_file
+        description: "Source file from stage"
+
+      - name: _dbt_updated_at
+        description: "Timestamp when dbt processed this record"
