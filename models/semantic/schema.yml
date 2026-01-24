@@ -1,0 +1,579 @@
+version: 2
+
+models:
+  # =============================================================================
+  # DIMENSION TABLES
+  # =============================================================================
+
+  - name: dim_dates
+    description: >
+      Date dimension for time intelligence analysis. Role-playing dimension supporting
+      dashboard filters by day, week, month, quarter, and year. Generated using
+      dbt_utils.date_spine covering 2020-2030.
+    columns:
+      - name: date_key
+        description: "Surrogate key in YYYYMMDD integer format"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: date_actual
+        description: "Actual date value"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: day_of_week
+        description: "Day of week (0=Sunday, 6=Saturday)"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [0, 1, 2, 3, 4, 5, 6]
+
+      - name: day_of_month
+        description: "Day of the month (1-31)"
+        data_tests:
+          - not_null
+
+      - name: day_of_year
+        description: "Day of the year (1-366)"
+        data_tests:
+          - not_null
+
+      - name: day_name
+        description: "Short day name (Mon, Tue, etc.)"
+
+      - name: day_name_full
+        description: "Full day name (Monday, Tuesday, etc.)"
+
+      - name: week_of_year
+        description: "Week number of the year (1-53)"
+
+      - name: week_start_date
+        description: "First day of the week"
+
+      - name: week_end_date
+        description: "Last day of the week"
+
+      - name: month_number
+        description: "Month number (1-12)"
+
+      - name: month_name
+        description: "Short month name (Jan, Feb, etc.)"
+
+      - name: month_name_full
+        description: "Full month name"
+
+      - name: month_start_date
+        description: "First day of the month"
+
+      - name: month_end_date
+        description: "Last day of the month"
+
+      - name: quarter_number
+        description: "Quarter number (1-4)"
+
+      - name: quarter_name
+        description: "Quarter name (Q1, Q2, Q3, Q4)"
+
+      - name: year_number
+        description: "Year (YYYY)"
+
+      - name: fiscal_year
+        description: "Fiscal year (same as calendar year)"
+
+      - name: fiscal_quarter
+        description: "Fiscal quarter (same as calendar quarter)"
+
+      - name: is_weekday
+        description: "TRUE if Monday-Friday"
+
+      - name: is_weekend
+        description: "TRUE if Saturday-Sunday"
+
+      - name: is_today
+        description: "TRUE if the date is today"
+
+      - name: is_current_month
+        description: "TRUE if the date is in the current month"
+
+      - name: is_current_quarter
+        description: "TRUE if the date is in the current quarter"
+
+      - name: is_current_year
+        description: "TRUE if the date is in the current year"
+
+      - name: is_previous_month
+        description: "TRUE if the date is in the previous month"
+
+      - name: is_last_90_days
+        description: "TRUE if the date is within the last 90 days (for trend analysis)"
+
+
+  - name: dim_users
+    description: >
+      User dimension for customer analytics. Contains user attributes including
+      tier classification, tenure calculations, and lifecycle segmentation.
+      SCD Type 1 (no history tracking).
+    columns:
+      - name: user_key
+        description: "Surrogate key (matches user_id)"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: user_id
+        description: "Natural key - unique user identifier"
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('cur_users')
+                field: user_id
+
+      - name: user_name
+        description: "User's full name"
+
+      - name: user_email
+        description: "User's email address"
+        data_tests:
+          - unique
+
+      - name: user_tier
+        description: "Subscription tier (guest/subscriber)"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['guest', 'subscriber']
+
+      - name: user_tier_display
+        description: "Display-friendly tier name (Basic/Premium)"
+
+      - name: user_tier_sort_order
+        description: "Sort order for tier (1=Premium, 2=Basic)"
+
+      - name: user_created_at
+        description: "Account creation timestamp"
+
+      - name: user_created_date
+        description: "Account creation date"
+
+      - name: user_tenure_days
+        description: "Days since account creation"
+
+      - name: user_tenure_band
+        description: "Tenure classification (New/Recent/Established/Veteran)"
+
+
+  - name: dim_chargers
+    description: >
+      Charger/station dimension for infrastructure analytics. Contains charger
+      attributes, location data, age calculations, and data quality flags.
+      SCD Type 1 (no history tracking).
+    columns:
+      - name: charger_key
+        description: "Surrogate key (matches charger_id)"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: charger_id
+        description: "Natural key - unique charger identifier"
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('cur_chargers')
+                field: charger_id
+
+      - name: charger_city
+        description: "Standardized city name"
+        data_tests:
+          - not_null
+
+      - name: charger_city_original
+        description: "Original city name from source"
+
+      - name: charger_latitude
+        description: "GPS latitude coordinate"
+
+      - name: charger_longitude
+        description: "GPS longitude coordinate"
+
+      - name: charger_installed_at
+        description: "Installation timestamp"
+
+      - name: charger_installed_date
+        description: "Installation date"
+
+      - name: installed_date_key
+        description: "Foreign key to dim_dates"
+
+      - name: charger_age_days
+        description: "Days since installation"
+
+      - name: charger_age_band
+        description: "Age classification (New/Recent/Established/Mature)"
+
+      - name: is_invalid_location
+        description: "TRUE if coordinates are outside Switzerland bounds"
+
+      - name: is_unmapped_city
+        description: "TRUE if city not found in mapping"
+
+      - name: has_data_quality_issue
+        description: "TRUE if any data quality issue exists"
+
+      - name: data_quality_status
+        description: "Human-readable data quality status"
+
+
+  - name: dim_cities
+    description: >
+      City dimension for geographic analytics. Aggregates charger statistics
+      by standardized city name. Supports the Geographic Performance dashboard.
+    columns:
+      - name: city_key
+        description: "Surrogate key (hash-based)"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: city_name
+        description: "Standardized city name"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: city_name_variants
+        description: "Comma-separated list of raw city name variants"
+
+      - name: city_center_latitude
+        description: "Average latitude of chargers in city"
+
+      - name: city_center_longitude
+        description: "Average longitude of chargers in city"
+
+      - name: total_chargers
+        description: "Total number of chargers in city"
+
+      - name: valid_location_chargers
+        description: "Chargers with valid GPS coordinates"
+
+      - name: invalid_location_chargers
+        description: "Chargers with invalid/missing GPS coordinates"
+
+      - name: first_charger_installed_at
+        description: "Date of first charger installation in city"
+
+      - name: last_charger_installed_at
+        description: "Date of most recent charger installation in city"
+
+      - name: market_size_tier
+        description: "Market classification based on charger count"
+
+      - name: is_unmapped_city
+        description: "TRUE if city not found in seed mapping"
+
+
+  # =============================================================================
+  # FACT TABLES
+  # =============================================================================
+
+  - name: fact_transactions
+    description: >
+      Central fact table for EV charging analytics. Grain: one row per charging
+      session (transaction). Joins transactions with payments for complete
+      financial picture. Includes all dimension keys for star schema joins
+      and comprehensive data quality flags.
+    columns:
+      - name: session_id
+        description: "Primary key - unique charging session identifier"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: user_key
+        description: "Foreign key to dim_users"
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_users')
+                field: user_key
+
+      - name: charger_key
+        description: "Foreign key to dim_chargers"
+        data_tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_chargers')
+                field: charger_key
+
+      - name: city_name
+        description: "Denormalized city name for easier joins"
+
+      - name: transaction_date_key
+        description: "Foreign key to dim_dates (YYYYMMDD format)"
+
+      - name: transaction_date
+        description: "Transaction date"
+
+      - name: start_time
+        description: "Charging session start timestamp"
+
+      - name: end_time
+        description: "Charging session end timestamp"
+
+      - name: energy_kwh
+        description: "Energy consumed in kilowatt-hours"
+
+      - name: energy_kwh_coalesced
+        description: "Energy consumed (0 if null)"
+
+      - name: duration_minutes
+        description: "Charging duration in minutes"
+
+      - name: duration_minutes_coalesced
+        description: "Charging duration (0 if null)"
+
+      - name: payment_amount
+        description: "Payment amount from linked payment record"
+
+      - name: payment_amount_coalesced
+        description: "Payment amount (0 if null)"
+
+      - name: payment_currency
+        description: "Payment currency code"
+
+      - name: revenue_per_kwh
+        description: "Calculated revenue per kWh consumed"
+
+      - name: charging_rate_kw
+        description: "Average charging rate in kW"
+
+      - name: payment_method
+        description: "Payment method used (card/RFID/app_wallet)"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['card', 'RFID', 'app_wallet']
+
+      - name: transaction_status
+        description: "Transaction status (completed/failed)"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['completed', 'failed']
+
+      - name: payment_id
+        description: "Linked payment record ID (null if missing)"
+
+      - name: is_invalid_time_range
+        description: "TRUE if end_time < start_time"
+
+      - name: is_missing_kwh
+        description: "TRUE if kwh_consumed is NULL"
+
+      - name: is_negative_kwh
+        description: "TRUE if kwh_consumed is negative"
+
+      - name: is_outlier_kwh
+        description: "TRUE if kwh_consumed is statistical outlier"
+
+      - name: is_outlier_duration
+        description: "TRUE if duration is statistical outlier"
+
+      - name: is_missing_payment
+        description: "TRUE if no payment record exists"
+
+      - name: is_missing_payment_amount
+        description: "TRUE if payment amount is NULL"
+
+      - name: is_invalid_payment_amount
+        description: "TRUE if payment amount is zero or negative"
+
+      - name: is_outlier_payment_amount
+        description: "TRUE if payment amount is statistical outlier"
+
+      - name: has_any_quality_issue
+        description: "TRUE if any data quality issue exists"
+
+      - name: is_valid_transaction
+        description: "TRUE if transaction passes all quality checks"
+
+      - name: transaction_count
+        description: "Always 1 - for aggregation convenience"
+
+      - name: completed_transaction_count
+        description: "1 if completed, 0 otherwise"
+
+      - name: failed_transaction_count
+        description: "1 if failed, 0 otherwise"
+
+
+  - name: fact_daily_metrics
+    description: >
+      Pre-aggregated daily metrics for dashboard performance. Grain: one row
+      per day per city (plus '_ALL_CITIES_' for totals). Supports KPIs,
+      revenue trends, and data quality monitoring.
+    columns:
+      - name: transaction_date
+        description: "Date of metrics"
+        data_tests:
+          - not_null
+
+      - name: city_name
+        description: "City name or '_ALL_CITIES_' for totals"
+        data_tests:
+          - not_null
+
+      - name: transaction_date_key
+        description: "Foreign key to dim_dates"
+
+      - name: total_revenue
+        description: "Total revenue for the day/city"
+
+      - name: valid_revenue
+        description: "Revenue from valid transactions only"
+
+      - name: avg_revenue_per_transaction
+        description: "Average revenue per transaction"
+
+      - name: total_energy_kwh
+        description: "Total energy delivered in kWh"
+
+      - name: valid_energy_kwh
+        description: "Energy from valid transactions only"
+
+      - name: avg_energy_per_transaction
+        description: "Average energy per transaction"
+
+      - name: total_transactions
+        description: "Total number of transactions"
+
+      - name: completed_transactions
+        description: "Number of completed transactions"
+
+      - name: failed_transactions
+        description: "Number of failed transactions"
+
+      - name: valid_transactions
+        description: "Number of transactions passing quality checks"
+
+      - name: active_users
+        description: "Count of distinct active users"
+
+      - name: active_chargers
+        description: "Count of distinct active chargers"
+
+      - name: transactions_with_issues
+        description: "Transactions with any data quality issue"
+
+      - name: transactions_missing_payment
+        description: "Transactions without payment records"
+
+      - name: valid_transaction_pct
+        description: "Percentage of valid transactions"
+
+      - name: issue_transaction_pct
+        description: "Percentage of transactions with issues"
+
+      - name: missing_payment_pct
+        description: "Percentage of transactions missing payment"
+
+    data_tests:
+      - unique:
+          column_name: "transaction_date || '|' || city_name"
+
+
+  - name: fact_charger_performance
+    description: >
+      Pre-aggregated charger-level metrics for the Charger Performance Matrix.
+      Grain: one row per charger (lifetime aggregation). Includes performance
+      classification and quartile rankings.
+    columns:
+      - name: charger_key
+        description: "Foreign key to dim_chargers"
+        data_tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('dim_chargers')
+                field: charger_key
+
+      - name: total_transactions
+        description: "Lifetime transaction count"
+
+      - name: completed_transactions
+        description: "Lifetime completed transactions"
+
+      - name: valid_transactions
+        description: "Lifetime valid transactions"
+
+      - name: total_revenue
+        description: "Lifetime total revenue"
+
+      - name: valid_revenue
+        description: "Lifetime revenue from valid transactions"
+
+      - name: avg_revenue_per_transaction
+        description: "Average revenue per transaction (key metric)"
+
+      - name: avg_valid_revenue_per_transaction
+        description: "Average revenue from valid transactions only"
+
+      - name: total_energy_kwh
+        description: "Lifetime energy delivered"
+
+      - name: unique_users
+        description: "Count of distinct users"
+
+      - name: first_transaction_date
+        description: "Date of first transaction"
+
+      - name: last_transaction_date
+        description: "Date of most recent transaction"
+
+      - name: days_with_transactions
+        description: "Number of days with at least one transaction"
+
+      - name: utilization_pct
+        description: "Percentage of days with transactions"
+
+      - name: avg_transactions_per_day
+        description: "Average daily transaction count"
+
+      - name: avg_revenue_per_day
+        description: "Average daily revenue"
+
+      - name: valid_transaction_pct
+        description: "Percentage of valid transactions"
+
+      - name: charger_id
+        description: "Charger identifier (denormalized)"
+
+      - name: charger_city
+        description: "City name (denormalized)"
+
+      - name: charger_age_band
+        description: "Charger age classification"
+
+      - name: transaction_volume_quartile
+        description: "Quartile ranking by transaction volume (1-4)"
+
+      - name: revenue_per_txn_quartile
+        description: "Quartile ranking by revenue per transaction (1-4)"
+
+      - name: total_revenue_quartile
+        description: "Quartile ranking by total revenue (1-4)"
+
+      - name: performance_classification
+        description: >
+          Performance category: Star Performer, High Performer, Average,
+          Underperformer, High Volume/Low Value, Low Volume/High Value
