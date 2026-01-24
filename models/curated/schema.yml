@@ -165,3 +165,116 @@ models:
 
       - name: _dbt_updated_at
         description: "Timestamp when dbt processed this record"
+
+  - name: cur_transactions
+    description: >
+      Curated transaction fact with data quality validation.
+      Flags invalid time ranges, negative kWh, and statistical outliers.
+      Includes derived charging_duration_minutes column.
+    columns:
+      - name: session_id
+        description: "Unique identifier for the charging session"
+        data_tests:
+          - unique
+          - not_null
+
+      - name: user_id
+        description: "Foreign key to users"
+        data_tests:
+          - not_null
+
+      - name: charger_id
+        description: "Foreign key to chargers"
+        data_tests:
+          - not_null
+
+      - name: start_time
+        description: "Timestamp when charging session started"
+
+      - name: end_time
+        description: "Timestamp when charging session ended (null if failed)"
+
+      - name: kwh_consumed
+        description: "Energy consumed in kilowatt-hours"
+
+      - name: payment_method
+        description: "Payment method used (card/RFID/app_wallet)"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['card', 'RFID', 'app_wallet']
+
+      - name: status
+        description: "Transaction status (completed/failed)"
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['completed', 'failed']
+
+      - name: charging_duration_minutes
+        description: "Derived: Duration of charging session in minutes (null if invalid time range)"
+
+      - name: is_invalid_time_range
+        description: "TRUE if end_time is earlier than start_time"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+
+      - name: is_missing_kwh
+        description: "TRUE if kwh_consumed is NULL"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+
+      - name: is_negative_kwh
+        description: "TRUE if kwh_consumed is negative"
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+
+      - name: is_outlier_kwh
+        description: >
+          TRUE if kwh_consumed is a statistical outlier (outside Q1-1.5*IQR to Q3+1.5*IQR range).
+          Only applies to positive values.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+
+      - name: is_outlier_duration
+        description: >
+          TRUE if charging_duration_minutes is a statistical outlier (outside Q1-1.5*IQR to Q3+1.5*IQR range).
+          Only applies to valid positive durations.
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [true, false]
+
+      - name: _kwh_outlier_lower_bound
+        description: "IQR lower bound for kWh outlier detection (Q1 - 1.5*IQR)"
+
+      - name: _kwh_outlier_upper_bound
+        description: "IQR upper bound for kWh outlier detection (Q3 + 1.5*IQR)"
+
+      - name: _duration_outlier_lower_bound
+        description: "IQR lower bound for duration outlier detection (Q1 - 1.5*IQR)"
+
+      - name: _duration_outlier_upper_bound
+        description: "IQR upper bound for duration outlier detection (Q3 + 1.5*IQR)"
+
+      - name: _loaded_at
+        description: "Timestamp when the raw data was loaded"
+
+      - name: _source_file
+        description: "Source file from stage"
+
+      - name: _dbt_updated_at
+        description: "Timestamp when dbt processed this record"
