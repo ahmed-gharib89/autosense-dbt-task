@@ -85,7 +85,7 @@ fact_transactions AS (
         transactions.is_outlier_duration,
 
         -- Data Quality Flags (from payments)
-        CASE WHEN payments.payment_id IS NULL THEN TRUE ELSE FALSE END AS is_missing_payment,
+        CASE WHEN payments.payment_id IS NULL AND transactions.status = 'completed' THEN TRUE ELSE FALSE END AS is_missing_payment,
         COALESCE(payments.is_missing_amount, FALSE) AS is_missing_payment_amount,
         COALESCE(payments.is_invalid_amount, FALSE) AS is_invalid_payment_amount,
         COALESCE(payments.is_outlier_amount, FALSE) AS is_outlier_payment_amount,
