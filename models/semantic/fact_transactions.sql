@@ -111,6 +111,7 @@ fact_transactions AS (
                 AND transactions.is_invalid_time_range = FALSE
                 AND transactions.is_missing_kwh = FALSE
                 AND transactions.is_negative_kwh = FALSE
+                AND payments.is_outlier_amount = FALSE
                 AND payments.payment_id IS NOT NULL
                 AND COALESCE(payments.is_invalid_amount, FALSE) = FALSE
             THEN TRUE
